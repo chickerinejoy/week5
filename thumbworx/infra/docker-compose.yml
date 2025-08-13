@@ -1,0 +1,56 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: thumbworx
+      POSTGRES_USER: thumb_user
+      POSTGRES_PASSWORD: thumb_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  flask:
+    build: ../ai-flask
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://thumb_user:thumb_pass@postgres:5432/thumbworx
+      - REDIS_URL=redis://redis:6379/0
+      - TRACCAR_BASE_URL=https://demo.traccar.org
+      - TRACCAR_USER=demo_user
+      - TRACCAR_PASS=demo_pass
+    depends_on:
+      - postgres
+      - redis
+
+  laravel:
+    build: ../backend-laravel
+    ports:
+      - "8000:80"
+    environment:
+      - DB_HOST=postgres
+      - DB_DATABASE=thumbworx
+      - DB_USERNAME=thumb_user
+      - DB_PASSWORD=thumb_pass
+      - TRACCAR_BASE_URL=https://demo.traccar.org
+      - TRACCAR_USER=demo_user
+      - TRACCAR_PASS=demo_pass
+    depends_on:
+      - postgres
+
+  next:
+    build: ../frontend-next
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+
+volumes:
+  pgdata:

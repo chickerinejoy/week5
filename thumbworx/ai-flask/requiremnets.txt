@@ -1,0 +1,9 @@
+Flask
+requests
+redis
+psycopg2-binary
+SQLAlchemy
+gunicorn
+python-dotenv
+geopy
+joblib
