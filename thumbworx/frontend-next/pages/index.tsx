@@ -1,7 +1,8 @@
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Geist, Geist_Mono } from "next/font/google";
 import dynamic from "next/dynamic";
-import useSWR from "swr";
+import axios from "axios";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,17 +14,72 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// SWR fetcher function
-const fetcher = (url: string) => fetch(url).then(r => r.json());
-
 // Dynamically import Map component without SSR
 const MapWithNoSSR = dynamic(() => import("../components/Map"), { ssr: false });
 
+// Define type for route data from Flask
+interface Route {
+  origin: string;
+  destination: string;
+  created_at?: string;
+}
+
 export default function Home() {
   const api = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const { data } = useSWR(`${api}/api/traccar/positions`, fetcher, {
-    refreshInterval: 5000,
-  });
+
+  const [positions, setPositions] = useState([]);
+  const [pickupAddress, setPickupAddress] = useState("");
+  const [dropoffAddress, setDropoffAddress] = useState("");
+  const [formMessage, setFormMessage] = useState("");
+  const [routes, setRoutes] = useState<Route[]>([]);
+
+  // Fetch live positions (poll every 5s)
+  useEffect(() => {
+    const fetchPositions = async () => {
+      try {
+        const res = await fetch(`${api}/api/traccar/positions`);
+        const data = await res.json();
+        setPositions(data);
+      } catch (err) {
+        console.error("Error fetching positions:", err);
+      }
+    };
+    fetchPositions();
+    const interval = setInterval(fetchPositions, 5000);
+    return () => clearInterval(interval);
+  }, [api]);
+
+  // Fetch latest routes from Flask
+  const fetchLatestRoutes = async () => {
+    try {
+      const res = await axios.get<Route[]>("http://127.0.0.1:5000/latest-routes");
+      setRoutes(res.data);
+    } catch (err) {
+      console.error("Error fetching latest routes:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchLatestRoutes();
+  }, []);
+
+  // Submit new route to Flask
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.post("http://127.0.0.1:5000/submit-route", {
+        origin: pickupAddress,
+        destination: dropoffAddress,
+      });
+      setFormMessage("✅ Route submitted successfully!");
+      setPickupAddress("");
+      setDropoffAddress("");
+      fetchLatestRoutes(); // Refresh list
+    } catch (error) {
+      console.error("❌ Error submitting route", error);
+      setFormMessage("Error sending route request.");
+    }
+  };
 
   return (
     <div
@@ -42,76 +98,71 @@ export default function Home() {
         {/* SWR Map section */}
         <h1 className="text-xl font-bold">Thumbworx Live Tracking</h1>
         <div className="w-full h-[500px] border rounded-lg overflow-hidden">
-          <MapWithNoSSR positions={data || []} />
+          <MapWithNoSSR positions={positions || []} />
         </div>
 
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+        {/* Route submission form */}
+        <div className="w-full p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+          <h2 className="text-lg font-semibold mb-2">Submit a Route</h2>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+            <input
+              type="text"
+              value={pickupAddress}
+              onChange={(e) => setPickupAddress(e.target.value)}
+              placeholder="Pickup address"
+              className="p-2 border rounded"
+              required
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <input
+              type="text"
+              value={dropoffAddress}
+              onChange={(e) => setDropoffAddress(e.target.value)}
+              placeholder="Drop-off address"
+              className="p-2 border rounded"
+              required
+            />
+            <button
+              type="submit"
+              className="bg-blue-500 text-white py-2 rounded hover:bg-blue-600"
+            >
+              Send Route
+            </button>
+          </form>
+          {formMessage && (
+            <p
+              className={`mt-2 text-sm ${
+                formMessage.startsWith("✅")
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {formMessage}
+            </p>
+          )}
+        </div>
+
+        {/* Latest routes list */}
+        <div className="w-full p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+          <h2 className="text-lg font-semibold mb-2">Latest Routes</h2>
+          {routes.length > 0 ? (
+            <ul>
+              {routes.map((r, i) => (
+                <li key={i}>
+                  <strong>{r.origin}</strong> → {r.destination}
+                  {r.created_at && (
+                    <span className="text-xs text-gray-500">
+                      {" "}
+                      ({new Date(r.created_at).toLocaleString()})
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>No routes yet.</p>
+          )}
         </div>
       </main>
-
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/file.svg" alt="File icon" width={16} height={16} />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/window.svg" alt="Window icon" width={16} height={16} />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image aria-hidden src="/globe.svg" alt="Globe icon" width={16} height={16} />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

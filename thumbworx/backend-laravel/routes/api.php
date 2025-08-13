@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\RouteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -20,4 +21,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/traccar/devices', [\App\Http\Controllers\TraccarController::class, 'devices']);
 Route::get('/traccar/positions', [\App\Http\Controllers\TraccarController::class, 'positions']);
+Route::post('/routes', [RouteController::class, 'store']);
+
 
