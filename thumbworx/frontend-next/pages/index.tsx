@@ -151,7 +151,7 @@ export default function Home() {
               {routes.map((r, i) => (
                 <li key={i} className="mb-1">
                   <strong>{r.origin}</strong> → {r.destination}{" "}
-                  {r.distance_km !== undefined && (
+                  {r.distance_km !== undefined && r.eta_minutes !== undefined && (
                     <span className="text-xs text-gray-500">
                       ({r.distance_km} km, {r.eta_minutes} min)
                     </span>

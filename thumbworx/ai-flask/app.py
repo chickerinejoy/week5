@@ -126,8 +126,25 @@ def submit_route():
     if not origin or not destination:
         return jsonify({"error": "Both origin and destination are required"}), 400
 
+    # Geocode addresses
+    origin_lat, origin_lon = geocode_address(origin)
+    destination_lat, destination_lon = geocode_address(destination)
+
+    if origin_lat is None or destination_lat is None:
+        return jsonify({"error": "Unable to geocode one or both addresses"}), 400
+
+    # Calculate distance and ETA
+    distance_km = calculate_distance(origin_lat, origin_lon, destination_lat, destination_lon)
+    eta_minutes = round(distance_km * 3, 2)
+
     # Store routes as a list in Redis
-    route_entry = {"origin": origin, "destination": destination, "time": datetime.utcnow().isoformat()}
+    route_entry = {
+        "origin": origin,
+        "destination": destination,
+        "distance_km": round(distance_km, 2),
+        "eta_minutes": eta_minutes,
+        "time": datetime.utcnow().isoformat()
+    }
     existing_routes = json.loads(r.get("latest_routes") or "[]")
     existing_routes.insert(0, route_entry)  # newest first
     existing_routes = existing_routes[:10]  # keep only last 10
