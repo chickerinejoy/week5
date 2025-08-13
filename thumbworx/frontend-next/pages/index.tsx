@@ -17,10 +17,12 @@ const geistMono = Geist_Mono({
 // Dynamically import Map component without SSR
 const MapWithNoSSR = dynamic(() => import("../components/Map"), { ssr: false });
 
-// Define type for route data from Flask
+// Updated type for route data including distance & ETA
 interface Route {
   origin: string;
   destination: string;
+  distance_km?: number;
+  eta_minutes?: number;
   created_at?: string;
 }
 
@@ -141,18 +143,23 @@ export default function Home() {
           )}
         </div>
 
-        {/* Latest routes list */}
+        {/* Latest routes list with distance & ETA */}
         <div className="w-full p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
           <h2 className="text-lg font-semibold mb-2">Latest Routes</h2>
           {routes.length > 0 ? (
             <ul>
               {routes.map((r, i) => (
-                <li key={i}>
-                  <strong>{r.origin}</strong> → {r.destination}
-                  {r.created_at && (
+                <li key={i} className="mb-1">
+                  <strong>{r.origin}</strong> → {r.destination}{" "}
+                  {r.distance_km !== undefined && (
                     <span className="text-xs text-gray-500">
+                      ({r.distance_km} km, {r.eta_minutes} min)
+                    </span>
+                  )}
+                  {r.created_at && (
+                    <span className="text-xs text-gray-400">
                       {" "}
-                      ({new Date(r.created_at).toLocaleString()})
+                      [{new Date(r.created_at).toLocaleString()}]
                     </span>
                   )}
                 </li>
