@@ -1,0 +1,6 @@
+Flask
+requests
+redis
+SQLAlchemy
+geopy
+psycopg2-binary

@@ -12,7 +12,8 @@ TRACCAR_BASE = os.getenv("TRACCAR_BASE_URL")
 TRACCAR_USER = os.getenv("TRACCAR_USER")
 TRACCAR_PASS = os.getenv("TRACCAR_PASS")
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-DB_URL = os.getenv("DATABASE_URL", "postgresql://thumb_user:thumb_pass@localhost/thumbworx")
+DB_URL = f"postgresql://postgres:4738@localhost:5432/thumbworx"
+
 
 r = redis.from_url(REDIS_URL)
 engine = create_engine(DB_URL)

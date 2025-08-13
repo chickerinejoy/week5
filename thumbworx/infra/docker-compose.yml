@@ -4,8 +4,8 @@ services:
     image: postgres:15
     environment:
       POSTGRES_DB: thumbworx
-      POSTGRES_USER: thumb_user
-      POSTGRES_PASSWORD: thumb_pass
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 4738
     ports:
       - "5432:5432"
     volumes:
