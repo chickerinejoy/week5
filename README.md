@@ -1,4 +1,6 @@
 # Thumbworx - Week 5 Full Integration
+## Video Presentation
+https://www.canva.com/design/DAGwB7pz41g/PzeXGovekYaqXdw2-ZZwXQ/watch?utm_content=DAGwB7pz41g&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h6a56557d62
 
 ## Overview
 Full-stack vehicle tracking & analytics using Flask, Laravel, Next.js, PostgreSQL, Redis, and Metabase.
