@@ -1,4 +1,4 @@
-<img width="527" height="345" alt="image" src="https://github.com/user-attachments/assets/10f3fc83-e8c2-4b2e-bafe-d7a3de5fe8d9" /># Thumbworx - Week 5 Full Integration
+# Thumbworx - Week 5 Full Integration
 ## Video Presentation and Documentation
 https://www.canva.com/design/DAGwB7pz41g/PzeXGovekYaqXdw2-ZZwXQ/watch?utm_content=DAGwB7pz41g&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h6a56557d62
 https://docs.google.com/document/d/1CoelF0zPx3EmWG7NGE2wVveEDkQRirva4RKGWVMRi0s/edit?usp=sharing
